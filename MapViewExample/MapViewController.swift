@@ -11,19 +11,19 @@ import MapKit
 import CoreLocation
 
 class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate {
-    
+
     @IBOutlet fileprivate weak var mapView: MKMapView!
-    
+
     fileprivate var locationManager: CLLocationManager?
     fileprivate var fromLocation: CLLocation?
     fileprivate var fromLocationAnnotation: MKPointAnnotation?
     fileprivate var toLocation: CLLocation?
-    
+
     // MARK: -
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         // Start location manager
         if CLLocationManager.locationServicesEnabled() {
             locationManager = CLLocationManager()
@@ -31,7 +31,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerD
             locationManager?.desiredAccuracy = kCLLocationAccuracyBest
             locationManager?.requestAlwaysAuthorization()
             locationManager?.startUpdatingLocation()
-            
+
             getLocationAndShowRoute(address: "東京都渋谷区道玄坂2-2−1")
         }
     }
@@ -40,9 +40,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerD
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
-        
+
         fromLocation = location
-        
+
         if fromLocationAnnotation == nil {
             // First time: Create and add annotation
             //fromLocationAnnotation = MKPointAnnotation()
@@ -59,7 +59,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerD
             mapView.addAnnotation(fromLocationAnnotation!)
         }
         mapView.showAnnotations(mapView.annotations, animated: true)
-        
+
         if location.horizontalAccuracy < 80 {
             // IMO 80m is accurate enough to search for routes
             let showRoute = #selector(showRoute(transportType:))
@@ -71,7 +71,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerD
             locationManager?.stopUpdatingLocation()
         }
     }
-    
+
     // MARK: - MKMapViewDelegate
 
     public func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
@@ -97,7 +97,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerD
         }
         return annotationView
     }
-    
+
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         guard let polyline = overlay as? MKPolyline else {
             // Just in case
@@ -110,9 +110,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerD
         lineRenderer.lineWidth = 3
         return lineRenderer
     }
-    
+
     // MARK: - Helpers
-    
+
     func image(text: String?) -> UIImage {
         let label = UILabel(frame: CGRect(x: 0, y: 0, width: 45, height: 45))
         label.text = text
@@ -123,7 +123,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerD
         label.layer.cornerRadius = label.frame.size.width * 0.5
         label.layer.borderWidth = 3
         label.layer.borderColor = label.textColor.cgColor
-        
+
         UIGraphicsBeginImageContextWithOptions(label.bounds.size, false, 0.0)
         label.layer.render(in: UIGraphicsGetCurrentContext()!)
         let img = UIGraphicsGetImageFromCurrentImageContext()
@@ -165,21 +165,21 @@ class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerD
             print("showRoute: no toLocation")
             return
         }
-        
+
         // Search routes in MapKit
         // http://qiita.com/oggata/items/18ce281d5818269c7281
         let fromPlacemark = MKPlacemark(coordinate: from.coordinate, addressDictionary: nil)
         let toPlacemark = MKPlacemark(coordinate: to.coordinate, addressDictionary: nil)
-        
+
         let fromItem = MKMapItem(placemark:fromPlacemark)
         let toItem = MKMapItem(placemark:toPlacemark)
-        
+
         let request = MKDirectionsRequest()
         request.source = fromItem
         request.destination = toItem
         request.requestsAlternateRoutes = false // only one route
         request.transportType = transportType
-        
+
         let directions = MKDirections(request:request)
         directions.calculate { response, error in
             if let error = error {
@@ -194,7 +194,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerD
             self.mapView.add(route.polyline)
         }
     }
-    
+
     func showOneWayAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Accept", style: .default, handler: { (_) in
@@ -203,4 +203,3 @@ class MapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerD
         self.present(alert, animated: true, completion: nil)
     }
 }
-
